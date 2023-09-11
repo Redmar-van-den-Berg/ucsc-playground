@@ -111,7 +111,6 @@ def parse_transcript(ts):
     
     drawing = draw_regions(ts, exons, [coding])
     print(drawing)
-    exit()
 
     print('-'*10, "EXONS", '-'*10)
     for e in exons: print(e)
@@ -134,20 +133,14 @@ def exon_regions(ts):
 
     # Create a list of exon Region objects
     return [Region(chrom, start, end) for start, end in zip(exon_starts, exon_ends)]
-    for region in exons:
-        print(region)
-
-    print(json.dumps(ts, indent=True))
-    exit()
-    pass
 
 def main(transcript):
+    # Get the location for the specified transcript
     chrom, start, end, version = get_region(transcript)
 
     # Add the version to the transcript name
     transcript = f"{transcript}.{version}"
 
-    # DMD
     url = f"https://api.genome.ucsc.edu/getData/track?genome=hg38;track=knownGene;chrom={chrom};start={start};end={end}"
     data = fetch(url)
 
@@ -156,6 +149,11 @@ def main(transcript):
             parse_transcript(ts)
             #uscs_to_tsv(ts)
             print(json.dumps(ts, indent=True))
+
+    track="unipDomain"
+    url = f"https://api.genome.ucsc.edu/getData/track?genome=hg38;track={track};chrom={chrom};start={start};end={end}"
+    data = fetch(url)
+    print(json.dumps(data, indent=True))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
