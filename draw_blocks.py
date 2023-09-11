@@ -19,7 +19,6 @@ def make_drawing(height=20, *args):
 
     for i, blocks in enumerate(args):
         color = kelly_colors[i%len(kelly_colors)]
-        print(color, file=sys.stderr)
         for start, end in blocks:
             elements.append(
                 svg.Rect(
@@ -41,5 +40,7 @@ if __name__ == '__main__':
 
     l1 = [(0, 100), (340, 500)]
     l2 = [(150, 200), (340, 430)]
-    print(make_drawing(50, l1, l2))
+    t = [l1, l2]
+    print(t)
+    print(make_drawing(50, *t))
 

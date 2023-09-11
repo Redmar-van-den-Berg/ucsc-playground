@@ -8,6 +8,7 @@ from filecache import filecache
 import json
 
 from dataclasses import dataclass, field
+from draw_blocks import make_drawing
 
 @dataclass
 class Region:
@@ -89,9 +90,24 @@ def uscs_to_tsv(ts):
     print(*(values[key] for key in header), sep='\t')
 
 
+def draw_regions(ts, *regionlist):
+    """Draw the regions for a transcript"""
+    offset = ts["chromStart"]
+
+    blocks = list()
+    for regions in regionlist:
+        # Make into tuples
+        blocks.append([(r.start-offset, r.end-offset) for r in regions])
+
+    return make_drawing(60, *blocks)
+
 def parse_transcript(ts):
     exons = exon_regions(ts)
     coding = coding_region(ts)
+    
+    drawing = draw_regions(ts, exons, [coding])
+    print(drawing)
+    exit()
 
     print('-'*10, "EXONS", '-'*10)
     for e in exons: print(e)
