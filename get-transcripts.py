@@ -93,11 +93,15 @@ def uscs_to_tsv(ts):
 def draw_regions(ts, *regionlist):
     """Draw the regions for a transcript"""
     offset = ts["chromStart"]
+    scale = 0.1
 
     blocks = list()
     for regions in regionlist:
         # Make into tuples
-        blocks.append([(r.start-offset, r.end-offset) for r in regions])
+        tupl = [(r.start-offset, r.end-offset) for r in regions]
+        # Scale
+        tupl = [(start*scale, end*scale) for start, end in tupl]
+        blocks.append(tupl)
 
     return make_drawing(60, *blocks)
 
