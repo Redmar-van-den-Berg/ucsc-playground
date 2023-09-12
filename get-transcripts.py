@@ -19,6 +19,7 @@ logging.basicConfig(level=logging.INFO)
 @dataclass
 class Region:
     """Class to hold a region"""
+    name: str
     chrom: str
     start: int
     end: int
@@ -28,7 +29,7 @@ class Region:
         self.size = self.end - self.start
 
     def __repr__(self):
-        return f"{self.chrom}:{self.start}-{self.end} ({self.size}bp)"
+        return f"{self.name} {self.chrom}:{self.start}-{self.end} ({self.size}bp)"
 
 header = ['#name', 'chrom', 'strand', 'txStart', 'txEnd', 'cdsStart', 'cdsEnd', 'exonCount', 'exonStarts', 'exonEnds', 'proteinID', 'alignID']
 
@@ -135,7 +136,7 @@ def parse_transcript(ts):
     print()
 
 def coding_region(ts):
-    return Region(ts["chrom"], ts["thickStart"], ts["thickEnd"])
+    return Region("CDS", ts["chrom"], ts["thickStart"], ts["thickEnd"])
 
 
 def print_genomic_region(genomic_region):
@@ -153,7 +154,15 @@ def exon_regions(ts):
     exon_ends = [start + size for start, size in zip(exon_starts, exon_sizes)]
 
     # Create a list of exon Region objects
-    return [Region(chrom, start, end) for start, end in zip(exon_starts, exon_ends)]
+    regions = list()
+    for i, range in enumerate(zip(exon_starts, exon_ends), 1):
+        if ts["strand"] == '-':
+            exon_nr = len(exon_starts) - i + 1
+        else:
+            exon_nr = i
+        start, end = range
+        regions.append(Region(f"Exon-{exon_nr}", chrom, start, end))
+    return regions
 
 def fetch_uniprot_track(track, chrom, start, end, uniprot_id):
     url = f"https://api.genome.ucsc.edu/getData/track?genome=hg38;track={track};chrom={chrom};start={start};end={end}"
@@ -167,7 +176,7 @@ def fetch_uniprot_track(track, chrom, start, end, uniprot_id):
             if domain["chromStart"] != domain["thickStart"] or domain["chromEnd"] != domain["thickEnd"]:
                 raise NotImplementedError
 
-            domain_regions.append(Region(domain["chrom"], domain["chromStart"], domain["chromEnd"]))
+            domain_regions.append(Region(domain["name"], domain["chrom"], domain["chromStart"], domain["chromEnd"]))
             #print(json.dumps(domain, indent=True))
     return domain_regions
 
@@ -184,10 +193,9 @@ def main(transcript, format):
     for ts in transcript_data["knownGene"]:
         if ts["name"] == transcript:
             genomic_region = parse_transcript(ts)
-            break;
+            break
     else:
         raise RuntimeError(f"transcript {transcript} not found")
-            #uscs_to_tsv(ts)
 
     # Next, we get some more tracks we are interested in
     uniprot_tracks = ["unipDomain", "unipStruct", "unipLocTransMemb", "unipLocCytopl", "unipRepeat"]
