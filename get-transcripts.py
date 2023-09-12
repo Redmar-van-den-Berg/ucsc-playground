@@ -8,7 +8,7 @@ from filecache import filecache
 import json
 
 from dataclasses import dataclass, field
-from draw_blocks import make_drawing
+from draw_blocks import make_drawing, draw_regions
 
 # Set up logging
 import logging
@@ -114,6 +114,7 @@ def draw_genomic_regions(ts, genomic_region):
         tupl = [(start*scale, end*scale) for start, end in tupl]
         blocks.append(tupl)
 
+    return draw_regions(genomic_region, offset)
     return make_drawing(60, *blocks)
 
 def parse_transcript(ts):
@@ -156,11 +157,13 @@ def exon_regions(ts):
     # Create a list of exon Region objects
     regions = list()
     for i, range in enumerate(zip(exon_starts, exon_ends), 1):
+        # Ensure numbering is consistent with strand
         if ts["strand"] == '-':
             exon_nr = len(exon_starts) - i + 1
         else:
             exon_nr = i
         start, end = range
+
         regions.append(Region(f"Exon-{exon_nr}", chrom, start, end))
     return regions
 
