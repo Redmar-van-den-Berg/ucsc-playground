@@ -190,7 +190,7 @@ def main(transcript, format):
             #uscs_to_tsv(ts)
 
     # Next, we get some more tracks we are interested in
-    uniprot_tracks = ["unipDomain"]
+    uniprot_tracks = ["unipDomain", "unipStruct", "unipLocTransMemb", "unipLocCytopl", "unipRepeat"]
     uniprot_id = ts["geneName2"]
     for track in uniprot_tracks:
         genomic_region[track] = fetch_uniprot_track(track, chrom, start, end, uniprot_id)
