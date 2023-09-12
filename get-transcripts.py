@@ -155,8 +155,24 @@ def exon_regions(ts):
     # Create a list of exon Region objects
     return [Region(chrom, start, end) for start, end in zip(exon_starts, exon_ends)]
 
+def fetch_uniprot_track(track, chrom, start, end, uniprot_id):
+    url = f"https://api.genome.ucsc.edu/getData/track?genome=hg38;track={track};chrom={chrom};start={start};end={end}"
+    data = fetch(url)
+
+    domain_regions = list()
+    for domain in data[track]:
+        # Ensure that we only include domains for the correct protein
+        if domain["uniProtId"] == uniprot_id:
+            # Do some sanity checks
+            if domain["chromStart"] != domain["thickStart"] or domain["chromEnd"] != domain["thickEnd"]:
+                raise NotImplementedError
+
+            domain_regions.append(Region(domain["chrom"], domain["chromStart"], domain["chromEnd"]))
+            #print(json.dumps(domain, indent=True))
+    return domain_regions
+
 def main(transcript, format):
-    # Get the location for the specified transcript
+# Get the location for the specified transcript
     chrom, start, end, version = get_region(transcript)
 
     # Add the version to the transcript name
@@ -174,12 +190,10 @@ def main(transcript, format):
             #uscs_to_tsv(ts)
 
     # Next, we get some more tracks we are interested in
-    tracks = ["unipDomain"]
-    for track in tracks:
-        url = f"https://api.genome.ucsc.edu/getData/track?genome=hg38;track={track};chrom={chrom};start={start};end={end}"
-        data = fetch(url)
-        print(json.dumps(data))
-    exit()
+    uniprot_tracks = ["unipDomain"]
+    uniprot_id = ts["geneName2"]
+    for track in uniprot_tracks:
+        genomic_region[track] = fetch_uniprot_track(track, chrom, start, end, uniprot_id)
     #print(json.dumps(data, indent=True))
 
     output(ts, genomic_region, format)
