@@ -10,6 +10,12 @@ import json
 from dataclasses import dataclass, field
 from draw_blocks import make_drawing
 
+# Set up logging
+import logging
+logger = logging.getLogger(__name__)
+
+logging.basicConfig(level=logging.INFO)
+
 @dataclass
 class Region:
     """Class to hold a region"""
@@ -26,8 +32,12 @@ class Region:
 
 header = ['#name', 'chrom', 'strand', 'txStart', 'txEnd', 'cdsStart', 'cdsEnd', 'exonCount', 'exonStarts', 'exonEnds', 'proteinID', 'alignID']
 
-@filecache(24 * 7 * 60 * 60)
 def fetch(url):
+    logger.info(f"Fetching {url}")
+    return _fetch(url)
+
+@filecache(24 * 7 * 60 * 60)
+def _fetch(url):
     try:
         response = urllib.request.urlopen(url)
     except HTTPError as e:
