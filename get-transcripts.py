@@ -90,13 +90,13 @@ def uscs_to_tsv(ts):
     print(*(values[key] for key in header), sep='\t')
 
 
-def draw_regions(ts, *regionlist):
+def draw_genomic_regions(ts, genomic_region):
     """Draw the regions for a transcript"""
     offset = ts["chromStart"]
     scale = 0.1
 
     blocks = list()
-    for regions in regionlist:
+    for regions in genomic_region.values():
         # Make into tuples
         tupl = [(r.start-offset, r.end-offset) for r in regions]
         # Scale
@@ -107,8 +107,12 @@ def draw_regions(ts, *regionlist):
 
 def parse_transcript(ts):
     exons = exon_regions(ts)
-    coding = coding_region(ts)
+    coding = [coding_region(ts)]
     
+    return {
+        "exons": exons,
+        "coding": coding,
+    }
     drawing = draw_regions(ts, exons, [coding])
     print(drawing)
 
@@ -123,6 +127,13 @@ def parse_transcript(ts):
 def coding_region(ts):
     return Region(ts["chrom"], ts["thickStart"], ts["thickEnd"])
 
+
+def print_genomic_region(genomic_region):
+    for name, regions in genomic_region.items():
+        print('-'*10, name, '-'*10)
+        for i in regions:
+            print(i)
+
 def exon_regions(ts):
     """Parse transcript into usable format"""
     chrom = ts["chrom"]
@@ -134,7 +145,7 @@ def exon_regions(ts):
     # Create a list of exon Region objects
     return [Region(chrom, start, end) for start, end in zip(exon_starts, exon_ends)]
 
-def main(transcript):
+def main(transcript, format):
     # Get the location for the specified transcript
     chrom, start, end, version = get_region(transcript)
 
@@ -142,25 +153,45 @@ def main(transcript):
     transcript = f"{transcript}.{version}"
 
     url = f"https://api.genome.ucsc.edu/getData/track?genome=hg38;track=knownGene;chrom={chrom};start={start};end={end}"
-    data = fetch(url)
+    transcript_data = fetch(url)
 
-    for ts in data["knownGene"]:
+    for ts in transcript_data["knownGene"]:
         if ts["name"] == transcript:
-            parse_transcript(ts)
+            genomic_region = parse_transcript(ts)
+            break;
+    else:
+        raise RuntimeError(f"transcript {transcript} not found")
             #uscs_to_tsv(ts)
-            print(json.dumps(ts, indent=True))
 
-    track="unipDomain"
-    url = f"https://api.genome.ucsc.edu/getData/track?genome=hg38;track={track};chrom={chrom};start={start};end={end}"
-    data = fetch(url)
-    print(json.dumps(data, indent=True))
+    # Next, we get some more tracks we are interested in
+    tracks = ["unipDomain"]
+    for track in tracks:
+        url = f"https://api.genome.ucsc.edu/getData/track?genome=hg38;track={track};chrom={chrom};start={start};end={end}"
+        data = fetch(url)
+        print(json.dumps(data))
+    exit()
+    #print(json.dumps(data, indent=True))
+
+    output(ts, genomic_region, format)
+
+def output(transcript, genomic_region, format):
+    if format == "text":
+        print_genomic_region(genomic_region)
+    elif format=="json":
+        print(genomic_region)
+    elif format == "svg":
+        print(draw_genomic_regions(transcript, genomic_region))
+    else:
+        raise NotImplementedError
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('transcript')
+    parser.add_argument('--format', choices=['text', 'json', 'svg'])
 
     args = parser.parse_args()
 
-    main(args.transcript)
+    main(args.transcript, args.format)
 
