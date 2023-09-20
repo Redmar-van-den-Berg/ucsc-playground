@@ -29,7 +29,7 @@ class Region:
         self.size = self.end - self.start
 
     def __repr__(self):
-        return f"{self.name} {self.chrom}:{self.start}-{self.end} ({self.size}bp)"
+        return f"{self.name} {self.chrom}:{self.start:,}-{self.end:,} ({self.size}bp)"
 
 header = ['#name', 'chrom', 'strand', 'txStart', 'txEnd', 'cdsStart', 'cdsEnd', 'exonCount', 'exonStarts', 'exonEnds', 'proteinID', 'alignID']
 
@@ -164,7 +164,7 @@ def exon_regions(ts):
             exon_nr = i
         start, end = range
 
-        regions.append(Region(f"Exon-{exon_nr}", chrom, start, end))
+        regions.append(Region(f"{exon_nr}", chrom, start, end))
     return regions
 
 def fetch_uniprot_track(track, chrom, start, end, uniprot_id):
@@ -201,7 +201,7 @@ def main(transcript, format):
         raise RuntimeError(f"transcript {transcript} not found")
 
     # Next, we get some more tracks we are interested in
-    uniprot_tracks = ["unipDomain", "unipStruct", "unipLocTransMemb", "unipLocCytopl", "unipRepeat"]
+    uniprot_tracks = ["unipDomain", "unipStruct", "unipLocCytopl", "unipLocTransMemb", "unipLocExtra", "unipRepeat"]
     uniprot_id = ts["geneName2"]
     for track in uniprot_tracks:
         genomic_region[track] = fetch_uniprot_track(track, chrom, start, end, uniprot_id)
