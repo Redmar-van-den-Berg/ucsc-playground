@@ -7,6 +7,8 @@ from urllib.error import HTTPError
 from filecache import filecache
 import json
 
+from typing import Any
+
 from dataclasses import dataclass, field
 from draw_blocks import make_drawing, draw_regions
 
@@ -30,6 +32,10 @@ class Region:
 
     def __repr__(self):
         return f"{self.name} {self.chrom}:{self.start:,}-{self.end:,} ({self.size}bp)"
+
+    @property
+    def bed(self) -> str:
+        return f"{self.chrom}\t{self.start-1}\t{self.end}\t{self.name}"
 
 header = ['#name', 'chrom', 'strand', 'txStart', 'txEnd', 'cdsStart', 'cdsEnd', 'exonCount', 'exonStarts', 'exonEnds', 'proteinID', 'alignID']
 
@@ -183,7 +189,15 @@ def fetch_uniprot_track(track, chrom, start, end, uniprot_id):
             #print(json.dumps(domain, indent=True))
     return domain_regions
 
-def main(transcript, format):
+def export_tracks(genomic_region: dict[str, Any], fname: str) -> None:
+    os.makedirs(fname, exist_ok=True)
+
+    for trackname, regions in genomic_region.items():
+        with open(f"{fname}/{trackname}.bed", "wt") as fout:
+            for region in regions:
+                print(region.bed, file=fout)
+
+def main(transcript, format, export):
 # Get the location for the specified transcript
     chrom, start, end, version = get_region(transcript)
 
@@ -209,6 +223,9 @@ def main(transcript, format):
 
     output(ts, genomic_region, format)
 
+    if export:
+        export_tracks(genomic_region, ts["name"])
+
 def output(transcript, genomic_region, format):
     if format == "text":
         print_genomic_region(genomic_region)
@@ -225,8 +242,9 @@ if __name__ == '__main__':
 
     parser.add_argument('transcript')
     parser.add_argument('--format', choices=['text', 'json', 'svg'])
+    parser.add_argument('--export', default=False, action='store_true', help="Export al tracks to the transcript folder")
 
     args = parser.parse_args()
 
-    main(args.transcript, args.format)
+    main(args.transcript, args.format, args.export)
 
