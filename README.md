@@ -18,3 +18,8 @@ options:
 ```bash
 python3 get-transcripts.py ENST00000357033 --format text
 ```
+
+### FLT3
+```bash
+python3 get-transcripts.py ENST00000241453.12 --format text
+```

@@ -215,7 +215,7 @@ def main(transcript, format, export):
         raise RuntimeError(f"transcript {transcript} not found")
 
     # Next, we get some more tracks we are interested in
-    uniprot_tracks = ["unipDomain", "unipStruct", "unipLocCytopl", "unipLocTransMemb", "unipLocExtra", "unipRepeat"]
+    uniprot_tracks = ["unipDomain", "unipStruct", "unipLocCytopl", "unipLocTransMemb", "unipLocExtra", "unipRepeat", "unipDisulfBond"]
     uniprot_id = ts["geneName2"]
     for track in uniprot_tracks:
         genomic_region[track] = fetch_uniprot_track(track, chrom, start, end, uniprot_id)
